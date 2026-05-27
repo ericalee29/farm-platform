@@ -1,0 +1,28 @@
+{
+  "name": "farm-nft-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "demo:local": "hardhat run scripts/demo-local.ts",
+    "viewer": "python3 -m http.server 5173 --bind 127.0.0.1 --directory viewer",
+    "wallet:address": "hardhat run scripts/print-wallet-address.ts",
+    "db:up": "docker compose up -d postgres",
+    "db:migrate": "npm --prefix backend run db:migrate",
+    "check:env": "npm --prefix backend run check:env",
+    "coverage": "hardhat coverage",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "backend:dev": "npm --prefix backend run dev",
+    "backend:build": "npm --prefix backend run build",
+    "backend:start": "npm --prefix backend start"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.19",
+    "solidity-coverage": "^0.8.13",
+    "typescript": "^5.4.5"
+  }
+}

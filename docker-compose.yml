@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: farm-nft-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: farm_nft
+    ports:
+      - "5432:5432"
+    volumes:
+      - farm_nft_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d farm_nft"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  farm_nft_postgres:
