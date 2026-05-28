@@ -7,6 +7,7 @@ import { consumerRoutes } from "./routes/consumerRoutes";
 import { farmerRoutes } from "./routes/farmerRoutes";
 import { ipfsRoutes } from "./routes/ipfsRoutes";
 import { nftRoutes } from "./routes/nftRoutes";
+import { daoRoutes } from "./routes/daoRoutes";
 
 export const app = express();
 
@@ -23,6 +24,7 @@ app.use("/farmer", farmerRoutes);
 app.use("/ipfs", ipfsRoutes);
 app.use("/nft", nftRoutes);
 app.use("/consumer", consumerRoutes);
+app.use("/dao", daoRoutes);
 
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   if (error instanceof ZodError) {

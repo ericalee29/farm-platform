@@ -9,7 +9,15 @@ const farmNftAbi = [
 ];
 
 const farmDaoAbi = [
-  "function isWhitelistedFarmer(address farmer) view returns (bool)"
+  "function isWhitelistedFarmer(address farmer) view returns (bool)",
+  "function isFarmerMintPaused(address farmer) view returns (bool)",
+  "function canMint(address farmer) view returns (bool)",
+  "function hasRole(bytes32 role, address account) view returns (bool)",
+  "function nextProposalId() view returns (uint256)",
+  "function quorum() view returns (uint256)",
+  "function votingPeriod() view returns (uint256)",
+  "function getProposal(uint256 proposalId) view returns (address account, uint8 action, string key, string value, bool flag, uint256 numberValue, uint256 tokenId, string evidenceURI, uint256 yesVotes, uint256 noVotes, uint256 deadline, bool executed)",
+  "event VoteCast(uint256 indexed proposalId, address indexed voter, bool support)"
 ];
 
 export type ChainTokenInfo = {
@@ -29,6 +37,43 @@ class BlockchainService {
 
   async isWhitelistedFarmer(farmerAddress: string): Promise<boolean> {
     return this.farmDao.isWhitelistedFarmer(farmerAddress);
+  }
+
+  async isMember(address: string): Promise<boolean> {
+    const MEMBER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("MEMBER_ROLE"));
+    return this.farmDao.hasRole(MEMBER_ROLE, address);
+  }
+
+  async getProposalCount(): Promise<number> {
+    const count = await this.farmDao.nextProposalId();
+    return Number(count);
+  }
+
+  async getProposal(proposalId: number) {
+    const p = await this.farmDao.getProposal(proposalId);
+    return {
+      proposalId,
+      account: p.account,
+      action: Number(p.action),
+      key: p.key,
+      value: p.value,
+      flag: p.flag,
+      numberValue: p.numberValue.toString(),
+      tokenId: p.tokenId.toString(),
+      evidenceURI: p.evidenceURI,
+      yesVotes: Number(p.yesVotes),
+      noVotes: Number(p.noVotes),
+      deadline: p.deadline.toString(),
+      executed: p.executed,
+      open: BigInt(Date.now()) / 1000n < p.deadline
+    };
+  }
+
+  async hasVoted(proposalId: number, voter: string): Promise<boolean> {
+    // hasVoted 在合約是 private，改查 VoteCast 事件
+    const filter = this.farmDao.filters.VoteCast(proposalId, voter);
+    const logs = await this.farmDao.queryFilter(filter);
+    return logs.length > 0;
   }
 
   async mintForFarmer(params: { farmerAddress: string; ownerAddress: string; metadataUri: string }) {
