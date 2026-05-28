@@ -21,7 +21,9 @@ export function buildFarmMetadata(params: {
       { trait_type: "Product Name", value: params.crop.productName || params.crop.cropName || "" },
       { trait_type: "Origin", value: params.crop.origin || "" },
       { trait_type: "Harvest Date", value: params.crop.harvestDate || "" },
-      { trait_type: "Batch Number", value: params.crop.batchNumber || "" }
+      { trait_type: "Batch Number", value: params.crop.batchNumber || "" },
+      { trait_type: "Farm Method", value: params.crop.farmMethod || "" },
+      { trait_type: "Pesticide Record", value: params.crop.pesticide || params.crop.pesticideRecord || "" }
     ].filter((item) => item.value !== ""),
     properties: {
       farmerAddress: params.farmerAddress,

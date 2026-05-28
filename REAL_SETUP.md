@@ -2,7 +2,7 @@
 
 這份文件是從 demo 進到真實後端流程的 checklist。
 
-## 0. 目前你已完成
+## 0. 目前已完成
 
 - Hardhat 合約測試：`npm test`
 - 本機合約 demo：`npm run demo:local`

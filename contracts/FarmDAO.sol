@@ -6,8 +6,14 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 contract FarmDAO is AccessControl {
     bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
 
+    enum ProposalAction {
+        Add,
+        Remove
+    }
+
     struct Proposal {
         address farmer;
+        ProposalAction action;
         string evidenceURI;
         uint256 yesVotes;
         uint256 noVotes;
@@ -25,9 +31,15 @@ contract FarmDAO is AccessControl {
 
     event MemberAdded(address indexed member);
     event MemberRemoved(address indexed member);
-    event FarmerProposed(uint256 indexed proposalId, address indexed farmer, string evidenceURI, uint256 deadline);
+    event FarmerProposed(
+        uint256 indexed proposalId,
+        address indexed farmer,
+        ProposalAction action,
+        string evidenceURI,
+        uint256 deadline
+    );
     event VoteCast(uint256 indexed proposalId, address indexed voter, bool support);
-    event ProposalExecuted(uint256 indexed proposalId, address indexed farmer, bool approved);
+    event ProposalExecuted(uint256 indexed proposalId, address indexed farmer, ProposalAction action, bool approved);
     event FarmerWhitelistSet(address indexed farmer, bool whitelisted);
 
     error InvalidAddress();
@@ -74,17 +86,15 @@ contract FarmDAO is AccessControl {
         onlyRole(MEMBER_ROLE)
         returns (uint256 proposalId)
     {
-        if (farmer == address(0)) {
-            revert InvalidAddress();
-        }
+        return _createProposal(farmer, ProposalAction.Add, evidenceURI);
+    }
 
-        proposalId = ++nextProposalId;
-        Proposal storage proposal = _proposals[proposalId];
-        proposal.farmer = farmer;
-        proposal.evidenceURI = evidenceURI;
-        proposal.deadline = block.timestamp + votingPeriod;
-
-        emit FarmerProposed(proposalId, farmer, evidenceURI, proposal.deadline);
+    function proposeFarmerRemoval(address farmer, string calldata evidenceURI)
+        external
+        onlyRole(MEMBER_ROLE)
+        returns (uint256 proposalId)
+    {
+        return _createProposal(farmer, ProposalAction.Remove, evidenceURI);
     }
 
     function vote(uint256 proposalId, bool support) external onlyRole(MEMBER_ROLE) {
@@ -118,11 +128,12 @@ contract FarmDAO is AccessControl {
         proposal.executed = true;
         bool approved = proposal.yesVotes >= quorum && proposal.yesVotes > proposal.noVotes;
         if (approved) {
-            isWhitelistedFarmer[proposal.farmer] = true;
-            emit FarmerWhitelistSet(proposal.farmer, true);
+            bool whitelisted = proposal.action == ProposalAction.Add;
+            isWhitelistedFarmer[proposal.farmer] = whitelisted;
+            emit FarmerWhitelistSet(proposal.farmer, whitelisted);
         }
 
-        emit ProposalExecuted(proposalId, proposal.farmer, approved);
+        emit ProposalExecuted(proposalId, proposal.farmer, proposal.action, approved);
     }
 
     function getProposal(uint256 proposalId)
@@ -130,6 +141,7 @@ contract FarmDAO is AccessControl {
         view
         returns (
             address farmer,
+            ProposalAction action,
             string memory evidenceURI,
             uint256 yesVotes,
             uint256 noVotes,
@@ -140,12 +152,31 @@ contract FarmDAO is AccessControl {
         Proposal storage proposal = _requireProposal(proposalId);
         return (
             proposal.farmer,
+            proposal.action,
             proposal.evidenceURI,
             proposal.yesVotes,
             proposal.noVotes,
             proposal.deadline,
             proposal.executed
         );
+    }
+
+    function _createProposal(address farmer, ProposalAction action, string calldata evidenceURI)
+        private
+        returns (uint256 proposalId)
+    {
+        if (farmer == address(0)) {
+            revert InvalidAddress();
+        }
+
+        proposalId = ++nextProposalId;
+        Proposal storage proposal = _proposals[proposalId];
+        proposal.farmer = farmer;
+        proposal.action = action;
+        proposal.evidenceURI = evidenceURI;
+        proposal.deadline = block.timestamp + votingPeriod;
+
+        emit FarmerProposed(proposalId, farmer, action, evidenceURI, proposal.deadline);
     }
 
     function _requireProposal(uint256 proposalId) private view returns (Proposal storage proposal) {

@@ -117,6 +117,14 @@ nftRoutes.delete(
   requireAuth,
   asyncHandler(async (req, res) => {
     const authedReq = req as AuthedRequest;
+    const dbRecord = await pool.query("SELECT * FROM crop_drafts WHERE token_id = $1 AND status = 'minted'", [
+      req.params.tokenId
+    ]);
+    if (!dbRecord.rowCount) {
+      res.status(404).json({ error: "Token not found in database" });
+      return;
+    }
+
     const tokenInfo = await blockchainService.getTokenInfo(req.params.tokenId);
     if (!tokenInfo.exists) {
       res.status(404).json({ error: "Token does not exist" });
