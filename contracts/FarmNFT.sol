@@ -51,6 +51,7 @@ contract FarmNFT is ERC721, ERC721URIStorage, AccessControl, Pausable, Reentranc
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MINTER_ROLE, admin);
         _grantRole(BURNER_ROLE, admin);
+        _grantRole(BURNER_ROLE, farmDAOAddress);
     }
 
     function setFarmDAO(address newFarmDAO) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -142,7 +143,7 @@ contract FarmNFT is ERC721, ERC721URIStorage, AccessControl, Pausable, Reentranc
         if (farmer == address(0) || to == address(0)) {
             revert InvalidAddress();
         }
-        if (!farmDAO.isWhitelistedFarmer(farmer)) {
+        if (!farmDAO.canMint(farmer)) {
             revert FarmerNotWhitelisted(farmer);
         }
 

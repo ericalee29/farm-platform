@@ -45,6 +45,22 @@ describe("FarmNFT", function () {
     expect(await nft.originalFarmerOf(1)).to.equal(farmer.address);
   });
 
+  it("blocks minting while a whitelisted farmer is paused by DAO", async function () {
+    const { farmer, dao, nft } = await deployFixture();
+
+    await dao.setFarmerWhitelist(farmer.address, true);
+    await dao.proposeFarmerMintPause(farmer.address, true, "ipfs://pause-evidence");
+    await dao.vote(1, true);
+    await ethers.provider.send("evm_increaseTime", [24 * 60 * 60 + 1]);
+    await ethers.provider.send("evm_mine");
+    await dao.execute(1);
+
+    await expect(nft.connect(farmer).mintByFarmer("ipfs://blocked")).to.be.revertedWithCustomError(
+      nft,
+      "FarmerNotWhitelisted"
+    );
+  });
+
   it("returns a non-existing info payload instead of reverting", async function () {
     const { nft } = await deployFixture();
 

@@ -10,6 +10,7 @@ async function main() {
 
   const nft = await ethers.deployContract("FarmNFT", [await dao.getAddress(), deployer.address]);
   await nft.waitForDeployment();
+  await (await dao.setFarmNFT(await nft.getAddress())).wait();
 
   if (process.env.BACKEND_MINTER_ADDRESS) {
     await (await nft.grantRole(await nft.MINTER_ROLE(), process.env.BACKEND_MINTER_ADDRESS)).wait();

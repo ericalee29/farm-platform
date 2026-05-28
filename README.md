@@ -3,8 +3,15 @@
 這個專案包含：
 
 - `FarmNFT.sol`：ERC-721 農產品履歷 NFT，支援農民直鑄、後端代鑄、刪除、原始農民、持有人、鑄造時間與 tokenURI 查詢。
-- `FarmDAO.sol`：簡化版 DAO 白名單治理，提供農民申請、投票、執行白名單，以及 `isWhitelistedFarmer` 給 NFT 與後端查驗。
+- `FarmDAO.sol`：DAO 治理，提供農民白名單申請/撤銷、暫停 mint 權限、認證標準、產品類別、metadata 必填欄位、quorum、投票期限、DAO 成員、爭議 NFT burn、metadata 更正核准等投票功能。
 - `backend/`：Express API，支援 SIWE 登入、履歷暫存 PostgreSQL、圖片與 metadata 上傳 IPFS、鑄造、刪除、消費者查驗。
+
+## DAO 治理能力
+
+- 農民資格：新增白名單、撤銷白名單、暫停/恢復 mint 權限。
+- 認證標準：更新有機認證 URI、開關產品類別、開關 metadata 必填欄位、要求碳足跡。
+- 系統參數：修改 quorum、修改投票期限、新增/移除 DAO 成員。
+- 爭議處理：消費者檢舉後由 DAO 投票 burn NFT；metadata 更正由 DAO 投票核准後再由後端/農民重新 mint。
 
 ## 安裝
 

@@ -158,6 +158,23 @@ http://localhost:3001/health
 - `DELETE /nft/:tokenId`
 - `GET /consumer/tokens/:tokenId`
 
+## 9. DAO 治理功能
+
+`FarmDAO.sol` 已支援：
+
+- `proposeFarmer`：新農民申請白名單。
+- `proposeFarmerRemoval`：撤銷問題農民白名單。
+- `proposeFarmerMintPause`：暫停或恢復農民 mint 權限。
+- `proposeOrganicCertificationURI`：修改有機認證標準 URI。
+- `proposeProductCategory`：新增或關閉農產品類別。
+- `proposeRequiredMetadataField`：調整 metadata 必填欄位。
+- `proposeCarbonFootprintRequired`：是否強制要求碳足跡。
+- `proposeQuorum`：修改 quorum。
+- `proposeVotingPeriod`：修改投票期限。
+- `proposeMember`：新增或移除 DAO 成員。
+- `proposeBurnToken`：爭議產品由 DAO 投票 burn NFT。
+- `proposeMetadataCorrection`：核准 metadata 更正，供後端 burn 舊 NFT 後重新 mint。
+
 ## 重要提醒
 
 不要把私鑰貼到聊天、GitHub 或截圖裡。只放在本機 `.env`。
