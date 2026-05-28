@@ -39,30 +39,82 @@ npm run deploy:sepolia
 
 部署後把 `FarmNFT`、`FarmDAO` 位址填回 `backend/.env` 或根目錄 `.env`。
 
-## 後端資料庫
+## 後端資料庫與啟動
 
-如果有 Docker，可以直接啟動 PostgreSQL：
+先複製環境檔：
 
 ```bash
-npm run db:up
+cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-如果沒有 Docker，請先用本機 PostgreSQL 建立資料庫 `farm_nft`，並確認 `backend/.env`：
+請依自己的 PostgreSQL 帳密修改 `.env` 和 `backend/.env`：
 
 ```text
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/farm_nft
+DATABASE_URL=postgres://使用者名稱:密碼@localhost:5432/farm_nft
 ```
 
-建立資料表：
+### Mac
+
+Homebrew 安裝與啟動 PostgreSQL：
+
+```bash
+brew install postgresql@16
+brew services start postgresql@16
+createdb farm_nft
+```
+
+如果本機 PostgreSQL 使用 macOS 帳號且沒有密碼，例如使用者是 `liyuanzhong`：
+
+```text
+DATABASE_URL=postgres://liyuanzhong@127.0.0.1:5432/farm_nft
+```
+
+可以用這行快速替換：
+
+```bash
+perl -pi -e 's#postgres://postgres:postgres@localhost:5432/farm_nft#postgres://你的Mac使用者名稱@127.0.0.1:5432/farm_nft#g' .env backend/.env
+```
+
+### Windows
+
+安裝 PostgreSQL 後，建立資料庫：
+
+```cmd
+createdb -U postgres farm_nft
+```
+
+如果安裝時設定 `postgres` 密碼為 `123456`，請在 `.env` 和 `backend/.env` 填：
+
+```text
+DATABASE_URL=postgres://postgres:123456@localhost:5432/farm_nft
+```
+
+PowerShell 快速替換範例：
+
+```powershell
+(Get-Content .env) -replace 'postgres://postgres:postgres@localhost:5432/farm_nft', 'postgres://postgres:你的密碼@localhost:5432/farm_nft' | Set-Content .env
+(Get-Content backend/.env) -replace 'postgres://postgres:postgres@localhost:5432/farm_nft', 'postgres://postgres:你的密碼@localhost:5432/farm_nft' | Set-Content backend/.env
+```
+
+### 建表與啟動
 
 ```bash
 npm run db:migrate
+npm run check:env
+npm run backend:dev
 ```
 
-## 啟動後端
+開啟：
 
-```bash
-npm run backend:dev
+```text
+http://localhost:3001/health
+```
+
+看到以下結果代表後端啟動成功：
+
+```json
+{"ok":true}
 ```
 
 ## 本機查驗頁
