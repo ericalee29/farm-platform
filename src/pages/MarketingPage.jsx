@@ -28,18 +28,37 @@ function MIcon({ name, size = 20 }) {
 
 // ── Nav ──────────────────────────────────────────────────────────
 function MkNav({ onVerify }) {
+  const navigate = useNavigate();
   const links = ["首頁", "新鮮農產", "查驗履歷", "認識小農", "顧客評價"];
   return (
     <nav className="mk-nav">
       <div className="wrap mk-nav-in">
         <div className="mk-logo">
           <img src="/assets/logo-mark.svg" alt="CropTrust" />
-          <span className="w">Crop<b>Trust</b></span>
+          <span className="w">Crop<b>Chain</b></span>
         </div>
         <div className="mk-links">
           {links.map(l => <a key={l} href="#" onClick={e => e.preventDefault()}>{l}</a>)}
         </div>
-        <button className="mk-cta" onClick={onVerify}>查驗農產品履歷</button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          
+          <button 
+            onClick={() => navigate("/farmer/login")}
+            className="mk-cta"
+            style={{ 
+              backgroundColor: '#EAF5EA', 
+              color: '#2E7D32', 
+              border: '1px solid #C8E6C9',
+            }}
+          >
+            農民後台 🧑‍🌾
+          </button>
+          
+          {/* 原本的主行動按鈕 */}
+          <button className="mk-cta" onClick={onVerify}>
+            查驗農產品履歷
+          </button>
+        </div>
       </div>
     </nav>
   );
