@@ -130,7 +130,7 @@ contract FarmNFT is ERC721, ERC721URIStorage, AccessControl, Pausable, Reentranc
             tokenUri: tokenURI(tokenId),
             originalFarmer: farmer,
             currentOwner: ownerOf(tokenId),
-            farmerWhitelisted: farmDAO.isWhitelistedFarmer(farmer),
+            farmerWhitelisted: farmDAO.canMint(farmer),
             mintedAt: _mintedAt[tokenId]
         });
     }

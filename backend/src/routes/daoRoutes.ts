@@ -23,15 +23,22 @@ daoRoutes.get("/proposals", asyncHandler(async (req, res) => {
 
 // 取得提案詳情
 daoRoutes.get("/proposals/:id", asyncHandler(async (req, res) => {
-  const proposal = await blockchainService.getProposal(Number(req.params.id));
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid proposal ID" });
+    return;
+  }
+  const proposal = await blockchainService.getProposal(id);
   res.json(proposal);
 }));
 
 // 當前帳號是否已投票
 daoRoutes.get("/proposals/:id/voted/:address", asyncHandler(async (req, res) => {
-  const voted = await blockchainService.hasVoted(
-    Number(req.params.id),
-    req.params.address
-  );
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid proposal ID" });
+    return;
+  }
+  const voted = await blockchainService.hasVoted(id, req.params.address);
   res.json({ proposalId: req.params.id, address: req.params.address, voted });
 }));

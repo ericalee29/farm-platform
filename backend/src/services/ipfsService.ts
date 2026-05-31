@@ -30,6 +30,17 @@ export class IpfsService {
     };
   }
 
+  async unpin(cid: string): Promise<void> {
+    const response = await fetch(`https://api.pinata.cloud/pinning/unpin/${cid}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${env.PINATA_JWT}` }
+    });
+    // 404 代表已不存在，不視為錯誤
+    if (!response.ok && response.status !== 404) {
+      throw new Error(`IPFS unpin failed: ${response.status} ${await response.text()}`);
+    }
+  }
+
   async uploadFile(file: Express.Multer.File) {
     const form = new FormData();
     const arrayBuffer = file.buffer.buffer.slice(

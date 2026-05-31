@@ -17,7 +17,8 @@ const farmDaoAbi = [
   "function quorum() view returns (uint256)",
   "function votingPeriod() view returns (uint256)",
   "function getProposal(uint256 proposalId) view returns (address account, uint8 action, string key, string value, bool flag, uint256 numberValue, uint256 tokenId, string evidenceURI, uint256 yesVotes, uint256 noVotes, uint256 deadline, bool executed)",
-  "event VoteCast(uint256 indexed proposalId, address indexed voter, bool support)"
+  "event VoteCast(uint256 indexed proposalId, address indexed voter, bool support)",
+  "event ProposalCreated(uint256 indexed proposalId, uint8 action, address indexed account, uint256 indexed tokenId, string key, string value, bool flag, uint256 numberValue, string evidenceURI, uint256 deadline)"
 ];
 
 export type ChainTokenInfo = {
@@ -35,8 +36,8 @@ class BlockchainService {
   private farmNft = new Contract(env.FARM_NFT_ADDRESS, farmNftAbi, this.signer);
   private farmDao = new Contract(env.FARM_DAO_ADDRESS, farmDaoAbi, this.provider);
 
-  async isWhitelistedFarmer(farmerAddress: string): Promise<boolean> {
-    return this.farmDao.isWhitelistedFarmer(farmerAddress);
+  async canMint(farmerAddress: string): Promise<boolean> {
+    return this.farmDao.canMint(farmerAddress);
   }
 
   async isMember(address: string): Promise<boolean> {
@@ -70,9 +71,15 @@ class BlockchainService {
   }
 
   async hasVoted(proposalId: number, voter: string): Promise<boolean> {
-    // hasVoted 在合約是 private，改查 VoteCast 事件
+    // hasVoted 在合約是 private mapping，改查事件。
+    // 先找提案建立的 block 作為掃描起點，避免遺漏投票期前半段的投票紀錄。
+    const createdFilter = this.farmDao.filters.ProposalCreated(proposalId);
+    const createdLogs = await this.farmDao.queryFilter(createdFilter);
+    const fromBlock = createdLogs[0]?.blockNumber ?? 0;
+
     const filter = this.farmDao.filters.VoteCast(proposalId, voter);
-    const logs = await this.farmDao.queryFilter(filter);
+    const currentBlock = await this.provider.getBlockNumber();
+    const logs = await this.farmDao.queryFilter(filter, fromBlock, currentBlock);
     return logs.length > 0;
   }
 

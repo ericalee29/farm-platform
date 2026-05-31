@@ -27,9 +27,9 @@ nftRoutes.post(
     const body = mintSchema.parse(req.body);
     const ownerAddress = normalizeAddress(body.ownerAddress || authedReq.user.address);
 
-    const whitelisted = await blockchainService.isWhitelistedFarmer(authedReq.user.address);
-    if (!whitelisted) {
-      res.status(403).json({ error: "Farmer is not DAO whitelisted" });
+    const canMint = await blockchainService.canMint(authedReq.user.address);
+    if (!canMint) {
+      res.status(403).json({ error: "Farmer is not allowed to mint" });
       return;
     }
 
@@ -54,11 +54,18 @@ nftRoutes.post(
     });
 
     const uploadedMetadata = await ipfsService.uploadJson(metadata, `farm-nft-${body.draftId}.json`);
-    const minted = await blockchainService.mintForFarmer({
-      farmerAddress: authedReq.user.address,
-      ownerAddress,
-      metadataUri: uploadedMetadata.uri
-    });
+    let minted: Awaited<ReturnType<typeof blockchainService.mintForFarmer>>;
+    try {
+      minted = await blockchainService.mintForFarmer({
+        farmerAddress: authedReq.user.address,
+        ownerAddress,
+        metadataUri: uploadedMetadata.uri
+      });
+    } catch (mintError) {
+      // mint 失敗時清除已上傳的 IPFS metadata，避免孤兒 CID 佔用 Pinata 配額
+      await ipfsService.unpin(uploadedMetadata.cid).catch(() => {});
+      throw mintError;
+    }
 
     const client = await pool.connect();
     try {

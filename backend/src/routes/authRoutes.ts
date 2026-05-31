@@ -19,15 +19,23 @@ authRoutes.post(
     const normalizedAddress = normalizeAddress(address);
     const nonce = crypto.randomBytes(16).toString("hex");
 
+    // 只在舊 nonce 已過期時才覆蓋，防止攻擊者在登入流程中途
+    // 呼叫此 endpoint 強制刷新 nonce，使合法用戶的簽名失效。
     await pool.query(
       `INSERT INTO auth_nonces (address, nonce, expires_at)
        VALUES ($1, $2, now() + interval '10 minutes')
        ON CONFLICT (address)
-       DO UPDATE SET nonce = EXCLUDED.nonce, expires_at = EXCLUDED.expires_at, created_at = now()`,
+       DO UPDATE SET nonce = EXCLUDED.nonce, expires_at = EXCLUDED.expires_at, created_at = now()
+       WHERE auth_nonces.expires_at <= now()`,
       [normalizedAddress, nonce]
     );
 
-    res.json({ nonce });
+    // 若上方 INSERT 因 WHERE 條件未執行（舊 nonce 仍有效），讀回現有 nonce 回傳
+    const { rows } = await pool.query(
+      "SELECT nonce FROM auth_nonces WHERE address = $1 AND expires_at > now()",
+      [normalizedAddress]
+    );
+    res.json({ nonce: rows[0].nonce });
   })
 );
 
@@ -51,7 +59,8 @@ authRoutes.post(
     const verification = await siweMessage.verify({
       signature,
       domain: env.SIWE_DOMAIN,
-      nonce
+      nonce,
+      uri: env.SIWE_URI
     });
 
     if (!verification.success || Number(siweMessage.chainId) !== env.CHAIN_ID) {
