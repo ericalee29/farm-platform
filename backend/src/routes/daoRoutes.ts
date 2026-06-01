@@ -43,6 +43,17 @@ daoRoutes.post("/dev/add-member", asyncHandler(async (req, res) => {
   res.json({ ok: true, address, txHash });
 }));
 
+// 取得提案所有投票者
+daoRoutes.get("/proposals/:id/voters", asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid proposal ID" });
+    return;
+  }
+  const voters = await blockchainService.getVoters(id);
+  res.json(voters);
+}));
+
 // 當前帳號是否已投票
 daoRoutes.get("/proposals/:id/voted/:address", asyncHandler(async (req, res) => {
   const id = Number(req.params.id);

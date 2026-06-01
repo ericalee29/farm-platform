@@ -52,7 +52,7 @@ export default function App() {
   // DAO wallet state (MetaMask account for DAO read/write)
   const [account,       setAccount]       = useState(null);
   const [isDAO,         setIsDAO]         = useState(false);
-  const [daoProposalId, setDaoProposalId] = useState(null);
+  const [daoSelectedProposal, setDaoSelectedProposal] = useState(null);
 
   // Drafts暫存 & NFT 資產
   const [drafts, setDrafts] = useState([]);
@@ -93,7 +93,7 @@ export default function App() {
   }, [account]);
 
   useEffect(() => {
-    if (currentPage !== "dao") setDaoProposalId(null);
+    if (currentPage !== "dao") setDaoSelectedProposal(null);
   }, [currentPage]);
 
   // ── Restore session from stored JWT ─────────────────────────────
@@ -353,20 +353,20 @@ export default function App() {
                   </div>
                 )}
 
-                {currentPage === "dao" && daoProposalId === null && (
+                {currentPage === "dao" && daoSelectedProposal === null && (
                   <DAOPage
                     account={account}
                     isDAO={isDAO}
-                    onOpenProposal={(id) => setDaoProposalId(id)}
+                    onOpenProposal={(proposal) => setDaoSelectedProposal(proposal)}
                   />
                 )}
 
-                {currentPage === "dao" && daoProposalId !== null && (
+                {currentPage === "dao" && daoSelectedProposal !== null && (
                   <ProposalDetail
                     account={account}
                     isDAO={isDAO}
-                    proposalId={daoProposalId}
-                    onBack={() => setDaoProposalId(null)}
+                    proposalData={daoSelectedProposal}
+                    onBack={() => setDaoSelectedProposal(null)}
                   />
                 )}
               </main>

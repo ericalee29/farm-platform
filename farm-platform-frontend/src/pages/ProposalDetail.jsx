@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, Check, X } from 'lucide-react'
 import { getReadContract, getWriteContract, STATUS_LABEL, STATUS_COLOR } from '../utils/contract'
 import { shortenAddress } from '../utils/wallet'
+import { dao as daoApi } from '../utils/api'
 
 const MOCK_PROPOSALS = {
   '1': {
@@ -64,32 +65,40 @@ function formatDeadline(deadline) {
   return new Date(Number(deadline) * 1000).toLocaleString('zh-TW')
 }
 
-// Props: account, isDAO, proposalId, onBack
-export default function ProposalDetail({ account, isDAO, proposalId, onBack }) {
-  const id = String(proposalId)
-  const [proposal, setProposal] = useState(MOCK_PROPOSALS[id] ?? null)
-  const [voted, setVoted] = useState(false)
+// Props: account, isDAO, proposalData (full proposal object), onBack
+export default function ProposalDetail({ account, isDAO, proposalData, onBack }) {
+  const isMock = proposalData?._source !== 'chain'
+  const [proposal, setProposal] = useState(proposalData ?? null)
+  const [voted,   setVoted]   = useState(false)
+  const [voters,  setVoters]  = useState([])
   const [loading, setLoading] = useState(false)
   const [txPending, setTxPending] = useState(false)
   const [txMsg, setTxMsg] = useState('')
 
   useEffect(() => {
-    if (account) loadDetail()
-  }, [proposalId, account])
+    if (!isMock && account && proposalData) loadDetail()
+    if (!isMock && proposalData) loadVoters()
+  }, [proposalData, account])
+
+  async function loadVoters() {
+    try {
+      const result = await daoApi.getVoters(Number(proposalData.proposalId))
+      setVoters(result)
+    } catch { /* ignore */ }
+  }
 
   async function loadDetail() {
     try {
       setLoading(true)
       const contract = await getReadContract()
       const [raw, hasVoted] = await Promise.all([
-        contract.getProposal(proposalId),
-        account ? contract.hasVoted(proposalId, account) : Promise.resolve(false),
+        contract.getProposal(proposalData.proposalId),
+        account ? contract.hasVoted(proposalData.proposalId, account) : Promise.resolve(false),
       ])
       setProposal(raw)
       setVoted(hasVoted)
     } catch {
-      // keep mock
-      if (account) setVoted(false)
+      setVoted(false)
     } finally {
       setLoading(false)
     }
@@ -100,8 +109,9 @@ export default function ProposalDetail({ account, isDAO, proposalId, onBack }) {
     setTxPending(true)
     setTxMsg('')
     try {
+      if (isMock) throw new Error('mock')
       const contract = await getWriteContract()
-      const tx = await contract.vote(proposalId, support)
+      const tx = await contract.vote(proposalData.proposalId, support)
       setTxMsg('交易送出，等待確認...')
       await tx.wait()
       setVoted(true)
@@ -115,17 +125,18 @@ export default function ProposalDetail({ account, isDAO, proposalId, onBack }) {
         e.message?.includes('User denied')
 
       if (isUserRejected) {
-        // 使用者取消 → 什麼都不做，清掉 pending 狀態
         setTxMsg('')
-      } else {
-        // 合約未部署或其他鏈上錯誤 → 模擬投票並標示清楚
+      } else if (isMock || e.message === 'mock') {
+        // Mock 提案 → 模擬投票
         setProposal((prev) => ({
           ...prev,
           yesVotes: support ? prev.yesVotes + 1n : prev.yesVotes,
           noVotes: !support ? prev.noVotes + 1n : prev.noVotes,
         }))
         setVoted(true)
-        setTxMsg('（模擬）投票成功！合約尚未部署，此結果僅供展示。')
+        setTxMsg('（示範）投票成功！')
+      } else {
+        setTxMsg('失敗：' + (e.shortMessage || e.message))
       }
     } finally {
       setTxPending(false)
@@ -136,8 +147,9 @@ export default function ProposalDetail({ account, isDAO, proposalId, onBack }) {
     setTxPending(true)
     setTxMsg('')
     try {
+      if (isMock) throw new Error('mock')
       const contract = await getWriteContract()
-      const tx = await contract.execute(proposalId)
+      const tx = await contract.execute(proposalData.proposalId)
       setTxMsg('交易送出，等待確認...')
       await tx.wait()
       setTxMsg('執行成功！')
@@ -202,11 +214,13 @@ export default function ProposalDetail({ account, isDAO, proposalId, onBack }) {
 
         {/* Meta info */}
         <div className="grid grid-cols-2 gap-3 text-sm mb-6">
-          <div className="bg-gray-50 rounded-lg px-4 py-3">
-            <p className="text-xs text-gray-400 mb-0.5">提案人</p>
-            <p className="text-gray-700 font-mono text-xs">{shortenAddress(proposal.proposerAddress)}</p>
-          </div>
-          {proposal.applicantAddress !== '0x0000000000000000000000000000000000000000' && (
+          {proposal.proposerAddress && proposal.proposerAddress !== '0x0000000000000000000000000000000000000000' && (
+            <div className="bg-gray-50 rounded-lg px-4 py-3">
+              <p className="text-xs text-gray-400 mb-0.5">提案人</p>
+              <p className="text-gray-700 font-mono text-xs">{shortenAddress(proposal.proposerAddress)}</p>
+            </div>
+          )}
+          {proposal.applicantAddress && proposal.applicantAddress !== '0x0000000000000000000000000000000000000000' && (
             <div className="bg-gray-50 rounded-lg px-4 py-3">
               <p className="text-xs text-gray-400 mb-0.5">申請人</p>
               <p className="text-gray-700 font-mono text-xs">{shortenAddress(proposal.applicantAddress)}</p>
@@ -235,6 +249,21 @@ export default function ProposalDetail({ account, isDAO, proposalId, onBack }) {
             />
           </div>
           <p className="text-xs text-gray-400 mt-1.5">總票數：{total}</p>
+          {voters.length > 0 && (
+            <div className="mt-3 border-t border-gray-50 pt-3">
+              <p className="text-xs text-gray-400 mb-2">投票紀錄</p>
+              <div className="space-y-1.5">
+                {voters.map((v) => (
+                  <div key={v.address} className="flex items-center justify-between text-xs">
+                    <span className="font-mono text-gray-500">{shortenAddress(v.address)}</span>
+                    <span className={`font-medium ${v.support ? 'text-green-600' : 'text-red-400'}`}>
+                      {v.support ? '✓ 贊成' : '✗ 反對'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Vote actions */}

@@ -78,6 +78,18 @@ class BlockchainService {
     };
   }
 
+  async getVoters(proposalId: number): Promise<{ address: string; support: boolean }[]> {
+    const currentBlock = await this.provider.getBlockNumber();
+    // Query last 50,000 blocks (~7 days on Sepolia) to stay within free-tier limits
+    const fromBlock = Math.max(0, currentBlock - 50000);
+    const filter = this.farmDao.filters.VoteCast(proposalId);
+    const logs = await this.farmDao.queryFilter(filter, fromBlock, currentBlock);
+    return logs.map((log: any) => {
+      const parsed = this.farmDao.interface.parseLog(log);
+      return { address: parsed!.args.voter, support: parsed!.args.support };
+    });
+  }
+
   async hasVoted(proposalId: number, voter: string): Promise<boolean> {
     // hasVoted 在合約是 private mapping，改查事件。
     // 先找提案建立的 block 作為掃描起點，避免遺漏投票期前半段的投票紀錄。

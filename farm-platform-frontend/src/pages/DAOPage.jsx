@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { Check, X, Plus, ChevronDown } from 'lucide-react'
-import { getReadContract, STATUS_LABEL, STATUS_COLOR } from '../utils/contract'
+import { STATUS_LABEL, STATUS_COLOR } from '../utils/contract'
 import { shortenAddress } from '../utils/wallet'
+import { dao as daoApi } from '../utils/api'
 import ApplyModal from '../components/ApplyModal'
 import CreateProposalModal from '../components/CreateProposalModal'
 
@@ -93,13 +94,65 @@ export default function DAOPage({ account, isDAO, onOpenProposal }) {
   async function loadProposals() {
     try {
       setLoading(true)
-      const contract = await getReadContract()
-      const raw = await contract.getProposals()
-      if (raw.length > 0) setProposals(raw)
+      const raw = await daoApi.getProposals()
+      if (raw && raw.length > 0) {
+        const chainProposals = raw.map(p => ({ ...chainToUi(p), _source: 'chain' }))
+        const chainIds = new Set(chainProposals.map(p => p.proposalId.toString()))
+        const mockKept = MOCK_PROPOSALS
+          .filter(p => !chainIds.has(p.proposalId.toString()))
+          .map(p => ({ ...p, _source: 'mock' }))
+        // 排序：deadline 大的（較新）排前面
+        const merged = [...chainProposals, ...mockKept]
+          .sort((a, b) => Number(b.deadline) - Number(a.deadline))
+        setProposals(merged)
+      }
     } catch {
-      // contract not deployed yet, keep mock data
+      // backend/contract not available, keep mock data
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Map backend proposal format → UI format
+  function chainToUi(p) {
+    const ACTION_LABELS = {
+      0:  '白名單申請', 1:  '移除農民',   2:  '暫停農民',
+      3:  '恢復農民',  4:  '有機認證URI', 5:  '產品類別',
+      6:  '必要欄位',  7:  '碳足跡',     8:  '規定修改',
+      9:  '規定修改',  10: '新增成員',    11: '移除成員',
+      12: '事件/爭議', 13: '事件/爭議',
+    }
+    const type = ACTION_LABELS[p.action] ?? '提案'
+
+    let desc = `${type}：`
+    if (p.action === 12) desc += `銷毀 Token #${p.tokenId}`
+    else if (p.action === 13) desc += `更正 Token #${p.tokenId} Metadata`
+    else if (p.action === 8)  desc += `調整投票門檻至 ${p.numberValue} 票`
+    else if (p.action === 9)  desc += `調整投票期限至 ${p.numberValue} 秒`
+    else if (p.account && p.account !== '0x0000000000000000000000000000000000000000')
+      desc += `${shortenAddress(p.account)}`
+    else if (p.key)   desc += p.key
+    else if (p.value) desc += p.value
+    else desc += `Proposal #${p.proposalId}`
+
+    const now = Math.floor(Date.now() / 1000)
+    const deadline = Number(p.deadline)
+    let status
+    if (p.executed)            status = 4
+    else if (now <= deadline)  status = 1  // Active
+    else if (p.yesVotes > p.noVotes) status = 2  // Passed
+    else                       status = 3  // Rejected
+
+    return {
+      proposalId:       BigInt(p.proposalId),
+      applicantAddress: p.account ?? '0x0000000000000000000000000000000000000000',
+      proposerAddress:  p.account ?? '0x0000000000000000000000000000000000000000',
+      yesVotes:         BigInt(p.yesVotes),
+      noVotes:          BigInt(p.noVotes),
+      deadline:         BigInt(deadline),
+      executed:         p.executed,
+      status,
+      description:      desc,
     }
   }
 
@@ -214,7 +267,7 @@ export default function DAOPage({ account, isDAO, onOpenProposal }) {
           {filtered.map((p) => (
             <div
               key={p.proposalId.toString()}
-              onClick={() => onOpenProposal(p.proposalId)}
+              onClick={() => onOpenProposal(p)}
               className="relative bg-white border border-gray-100 rounded-xl pt-8 px-5 pb-5 cursor-pointer hover:border-green-200 hover:shadow-sm transition-all"
             >
               {/* Bookmark tab */}

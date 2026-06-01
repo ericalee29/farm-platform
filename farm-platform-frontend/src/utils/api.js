@@ -113,6 +113,9 @@ export const dao = {
       method: 'POST',
       body: JSON.stringify({ address }),
     }),
+  getProposals: () => apiFetch('/dao/proposals'),
+  getProposal:  (id) => apiFetch(`/dao/proposals/${id}`),
+  getVoters:    (id) => apiFetch(`/dao/proposals/${id}/voters`),
 }
 
 // ── Consumer (public) ─────────────────────────────────────────────
