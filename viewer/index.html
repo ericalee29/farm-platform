@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Farm NFT 查驗頁</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">FarmNFT Consumer Verification</p>
+          <h1>農產品 NFT 查驗</h1>
+          <p class="subtitle">輸入 Token ID，確認履歷 metadata、原始鑄造農民、目前持有人、DAO 認證與上鏈時間。</p>
+        </div>
+        <div class="nft-visual" aria-hidden="true">
+          <div class="tag">FARM #1</div>
+          <div class="field-lines">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="qr-grid">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="lookup-panel">
+        <form id="lookupForm" class="lookup-form">
+          <label for="tokenId">Token ID</label>
+          <div class="lookup-row">
+            <input id="tokenId" name="tokenId" inputmode="numeric" value="1" autocomplete="off" />
+            <button type="submit">查驗</button>
+          </div>
+        </form>
+        <p id="statusText" class="status-text">已載入本機 demo token。</p>
+      </section>
+
+      <section id="result" class="result-grid" aria-live="polite"></section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

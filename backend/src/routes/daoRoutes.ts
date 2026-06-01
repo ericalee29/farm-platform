@@ -1,0 +1,55 @@
+import { Router } from "express";
+import asyncHandler from "express-async-handler";
+import { blockchainService } from "../services/blockchainService";
+
+export const daoRoutes = Router();
+
+// 驗證是否為 DAO 成員
+daoRoutes.get("/members/:address", asyncHandler(async (req, res) => {
+  const isMember = await blockchainService.isMember(req.params.address);
+  res.json({ address: req.params.address, isMember });
+}));
+
+// 取得提案列表
+daoRoutes.get("/proposals", asyncHandler(async (req, res) => {
+  const count = await blockchainService.getProposalCount();
+  const proposals = await Promise.all(
+    Array.from({ length: count }, (_, i) =>
+      blockchainService.getProposal(i + 1).catch(() => null)
+    )
+  );
+  res.json(proposals.filter(Boolean));
+}));
+
+// 取得提案詳情
+daoRoutes.get("/proposals/:id", asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid proposal ID" });
+    return;
+  }
+  const proposal = await blockchainService.getProposal(id);
+  res.json(proposal);
+}));
+
+// 開發者快速加入 DAO（不需要治理流程，需要後端 signer 擁有 DEFAULT_ADMIN_ROLE）
+daoRoutes.post("/dev/add-member", asyncHandler(async (req, res) => {
+  const { address } = req.body as { address?: string };
+  if (!address) {
+    res.status(400).json({ error: "address is required" });
+    return;
+  }
+  const txHash = await blockchainService.addDaoMember(address);
+  res.json({ ok: true, address, txHash });
+}));
+
+// 當前帳號是否已投票
+daoRoutes.get("/proposals/:id/voted/:address", asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid proposal ID" });
+    return;
+  }
+  const voted = await blockchainService.hasVoted(id, req.params.address);
+  res.json({ proposalId: req.params.id, address: req.params.address, voted });
+}));
