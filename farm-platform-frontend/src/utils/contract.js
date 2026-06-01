@@ -6,7 +6,7 @@ export const DAO_CONTRACT_ADDRESS = '0x384698AdB6126b6eabB705a9132dd80dbf8275D0'
 
 export const DAO_ABI = [
   // Read
-  'function isWhitelisted(address account) view returns (bool)',
+  'function hasRole(bytes32 role, address account) view returns (bool)',
   'function getProposals() view returns (tuple(uint256 proposalId, address applicantAddress, address proposerAddress, uint256 yesVotes, uint256 noVotes, uint256 deadline, bool executed, uint8 status, string description)[])',
   'function getProposal(uint256 proposalId) view returns (tuple(uint256 proposalId, address applicantAddress, address proposerAddress, uint256 yesVotes, uint256 noVotes, uint256 deadline, bool executed, uint8 status, string description))',
   'function hasVoted(uint256 proposalId, address voter) view returns (bool)',

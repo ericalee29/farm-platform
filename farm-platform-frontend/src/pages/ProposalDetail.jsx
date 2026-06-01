@@ -240,7 +240,9 @@ export default function ProposalDetail({ account, isDAO, proposalId, onBack }) {
         {/* Vote actions */}
         {isActive && (
           <div className="border-t border-gray-50 pt-5">
-            {voted ? (
+            {!isDAO ? (
+              <p className="text-center text-sm text-gray-400">僅 DAO 成員可投票</p>
+            ) : voted ? (
               <p className="text-center text-sm text-gray-400">您已對此提案投票</p>
             ) : (
               <div className="flex gap-3">
@@ -264,7 +266,7 @@ export default function ProposalDetail({ account, isDAO, proposalId, onBack }) {
         )}
 
         {/* Execute button */}
-        {isPassed && !isExecuted && (
+        {isPassed && !isExecuted && isDAO && (
           <div className="border-t border-gray-50 pt-5">
             <button
               onClick={handleExecute}

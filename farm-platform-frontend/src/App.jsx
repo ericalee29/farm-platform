@@ -83,9 +83,13 @@ export default function App() {
   useEffect(() => {
     if (!account) { setIsDAO(false); return; }
     getReadContract()
-      .then((c) => c.isWhitelisted(account))
+      .then(async (c) => {
+        const { ethers } = await import("ethers");
+        const MEMBER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("MEMBER_ROLE"));
+        return c.hasRole(MEMBER_ROLE, account);
+      })
       .then(setIsDAO)
-      .catch(() => setIsDAO(true));
+      .catch(() => setIsDAO(false));
   }, [account]);
 
   useEffect(() => {
@@ -322,6 +326,7 @@ export default function App() {
                     onAddNew={handleAddNewRecord}
                     nfts={nfts}
                     onDeleteNFT={handleDeleteNFT}
+                    account={account}
                   />
                 )}
 

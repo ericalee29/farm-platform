@@ -3,11 +3,12 @@ import DraftTable from '../components/DraftTable';
 import NFTAssetList from '../components/NFTAssetList';
 import { Sprout, ShieldCheck, Database } from 'lucide-react';
 
-export default function FarmerDashboard({ 
-  drafts, 
-  onSelectDraft, 
-  onDeleteDraft, 
-  onAddNew, 
+export default function FarmerDashboard({
+  drafts,
+  onSelectDraft,
+  onDeleteDraft,
+  onAddNew,
+  account, 
   nfts, 
   onDeleteNFT 
 }) {
@@ -21,7 +22,7 @@ export default function FarmerDashboard({
         <div className="lg:col-span-2 bg-[#EAF5EA]/70 backdrop-blur-md border border-[#C8E6C9]/40 rounded-2xl p-6 text-gray-800 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[180px]">
           <div>
             <h2 className="text-xl font-black text-[#1B5E20] tracking-wide flex items-center gap-2">
-              歡迎回來，王小農！👋
+              歡迎回來，{account ? `${account.slice(0,6)}...${account.slice(-4)}` : '小農'}！👋
             </h2>
             <p className="text-[#2E7D32] text-xs mt-2 max-w-lg leading-relaxed font-medium">
               當前區塊鏈網路連線正常，智能合約已就緒。您可以透過左下角的新增按鈕或點選既有草稿，快速發行具備密碼學存證的產銷履歷 NFT。
