@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { Layers, FileText, ShieldCheck } from 'lucide-react';
 import Icon from './CropTrustIcons';
-import { BrowserProvider, Contract } from 'ethers';
-import { DAO_CONTRACT_ADDRESS } from '../utils/contract';
-
-const ADD_MEMBER_ABI = ['function addMember(address member)'];
+import { dao } from '../utils/api';
 
 export default function Sidebar({ currentPage, setCurrentPage, walletConnected, siweAuthenticated, account, isDAO }) {
   const [joining, setJoining] = useState(false);
@@ -15,20 +12,11 @@ export default function Sidebar({ currentPage, setCurrentPage, walletConnected, 
     setJoining(true);
     setJoinMsg('');
     try {
-      // 用戶自己的 MetaMask 簽名送交易（需要有 DEFAULT_ADMIN_ROLE）
-      const provider = new BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new Contract(DAO_CONTRACT_ADDRESS, ADD_MEMBER_ABI, signer);
-      const tx = await contract.addMember(account);
-      setJoinMsg('交易送出，等待確認...');
-      await tx.wait();
-      setJoinMsg('✓ 已加入 DAO');
+      // 後端用 deployer key 幫用戶呼叫 addMember()，任何人都能用
+      await dao.devAddMember(account);
+      setJoinMsg('✓ 已加入 DAO，請重新整理頁面');
     } catch (e) {
-      if (e.code === 4001 || e.code === 'ACTION_REJECTED') {
-        setJoinMsg('');
-      } else {
-        setJoinMsg('失敗：' + (e.shortMessage || e.message));
-      }
+      setJoinMsg('失敗：' + (e.shortMessage || e.message));
     } finally {
       setJoining(false);
     }
