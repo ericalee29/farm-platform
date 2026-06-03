@@ -14,6 +14,7 @@ const farmDaoAbi = [
   "function canMint(address farmer) view returns (bool)",
   "function hasRole(bytes32 role, address account) view returns (bool)",
   "function addMember(address member)",
+  "function setFarmerWhitelist(address farmer, bool whitelisted)",
   "function nextProposalId() view returns (uint256)",
   "function quorum() view returns (uint256)",
   "function votingPeriod() view returns (uint256)",
@@ -39,8 +40,12 @@ class BlockchainService {
   private farmDaoWithSigner = new Contract(env.FARM_DAO_ADDRESS, farmDaoAbi, this.signer);
 
   async addDaoMember(address: string): Promise<string> {
-    const tx = await this.farmDaoWithSigner.addMember(address);
-    const receipt = await tx.wait();
+    // Grant DAO membership (can vote & propose)
+    const tx1 = await this.farmDaoWithSigner.addMember(address);
+    await tx1.wait();
+    // Grant farmer whitelist (can mint NFTs)
+    const tx2 = await this.farmDaoWithSigner.setFarmerWhitelist(address, true);
+    const receipt = await tx2.wait();
     return receipt.hash;
   }
 
