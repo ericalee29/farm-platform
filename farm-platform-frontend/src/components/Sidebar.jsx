@@ -28,8 +28,8 @@ export default function Sidebar({ currentPage, setCurrentPage, walletConnected, 
       <div className="space-y-6">
         
         {/* 漂亮的 Logo 區塊結構 */}
-        <div className="p-2 border-b border-[#E2EFE2] flex items-center gap-3 pb-5">
-          <div 
+        <a href="/" className="p-2 border-b border-[#E2EFE2] flex items-center gap-3 pb-5 no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none' }}>
+          <div
             className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner"
             style={{ backgroundColor: '#EAF5EA', color: '#4CAF50' }}
           >
@@ -43,7 +43,7 @@ export default function Sidebar({ currentPage, setCurrentPage, walletConnected, 
               Farmer Portal
             </div>
           </div>
-        </div>
+        </a>
         
         {/* 連動狀態的導航選單按鈕 */}
         <nav className="space-y-2">

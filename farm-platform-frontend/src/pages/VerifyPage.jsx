@@ -62,11 +62,11 @@ export default function VerifyPage() {
       <header className="vp-header">
         <div className="vp-header-in">
 
-          <div className="vp-logo">
+          <a href="/" className="vp-logo" style={{ textDecoration: 'none', cursor: 'pointer' }}>
             <img src="/assets/logo-mark.svg" alt="CropTrust" />
             <span className="word">Crop<b>Trust</b></span>
             <span className="sub">消費者查驗通道</span>
-          </div>
+          </a>
 
           <div className="vp-mode">
             <div className="vp-seg">
